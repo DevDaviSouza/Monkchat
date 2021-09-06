@@ -29,8 +29,9 @@ function lerUsuarioLogado(navigation) {
 
 export default function Conteudo() {
     const navigation = useHistory();
-    let usuariologado = lerUsuarioLogado(navigation);
+    const usuariologado = lerUsuarioLogado(navigation);
     const [chat, setChat] = useState([]);
+    const [idAlterando, setIdAlterando] = useState(0);
     const [sala, setSala] = useState('');
     const [usu, setUsu] = useState(usuariologado.nm_usuario);
     const [msg, setMsg] = useState('')
@@ -58,12 +59,26 @@ export default function Conteudo() {
     }
 
     const enviarMensagem = async () => {
-        const resp = await api.inserirMensagem(sala, usu, msg);
-        if (!validarResposta(resp)) 
-            return;
+        if (idAlterando > 0) {
+            const resp = await api.alterarMensagem(idAlterando, msg)
+            if (!validarResposta(resp)) 
+                return;
+            
+                toast.dark('💕 Mensagem alterada com sucesso!');
+                setIdAlterando(0);
+                setMsg('');
         
-        toast.dark('💕 Mensagem enviada com sucesso!');
-        await carregarMensagens();
+         }
+       
+       else {
+            const resp = await api.inserirMensagem(sala, usu, msg);
+            if (!validarResposta(resp))
+                return;
+            
+                toast.dark('💕 Mensagem enviada com sucesso!');
+                
+        }
+       await carregarMensagens();
     }
 
     const inserirUsuario = async () => {
@@ -97,6 +112,13 @@ export default function Conteudo() {
 
         toast.dark('💕 Mensagem removida!');
         await carregarMensagens();
+    }
+
+    const editar = async (item) => {
+        setMsg(item.ds_mensagem);
+        setIdAlterando(item.id_chat);
+
+
     }
 
 
@@ -138,6 +160,7 @@ export default function Conteudo() {
                     {chat.map(x =>
                         <div key={x.id_chat}>
                             <div className="chat-message">
+                                <div> <img onClick={() => editar(x)} src="/assets/images/editar.svg" alt="" style={{cursor: 'pointer'}} /> </div>
                                 <div> <img onClick={() => remover(x.id_chat)} src="/assets/images/delete.svg" alt="" style={{cursor: 'pointer'}}/> </div>
                                 <div>({new Date(x.dt_mensagem.replace('Z', '')).toLocaleTimeString()})</div>
                                 <div><b>{x.tb_usuario.nm_usuario}</b> fala para <b>Todos</b>:</div>
